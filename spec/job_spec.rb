@@ -8,24 +8,24 @@ end
 class ErrorJob
   cattr_accessor :runs; self.runs = 0
   def perform; raise 'did not work'; end
-end             
+end
 
 module M
   class ModuleJob
     cattr_accessor :runs; self.runs = 0
-    def perform; @@runs += 1; end    
+    def perform; @@runs += 1; end
   end
-  
+
 end
 
 describe Delayed::Job do
-  before  do               
+  before  do
     Delayed::Job.max_priority = nil
-    Delayed::Job.min_priority = nil      
-    
+    Delayed::Job.min_priority = nil
+
     Delayed::Job.delete_all
   end
-  
+
   before(:each) do
     SimpleJob.runs = 0
   end
@@ -106,7 +106,7 @@ describe Delayed::Job do
 
     $eval_job_ran.should == true
   end
-                   
+
   it "should work with jobs in modules" do
     M::ModuleJob.runs.should == 0
 
@@ -115,7 +115,7 @@ describe Delayed::Job do
 
     M::ModuleJob.runs.should == 1
   end
-                   
+
   it "should re-schedule by about 1 second at first and increment this more and more minutes when it fails to execute properly" do
     Delayed::Job.enqueue ErrorJob.new
     Delayed::Job.work_off(1)
@@ -170,7 +170,7 @@ describe Delayed::Job do
     job.should_receive(:attempt_to_load).with('Delayed::JobThatDoesNotExist').and_return(true)
     lambda { job.payload_object.perform }.should raise_error(Delayed::DeserializationError)
   end
-  
+
   it "should be failed if it failed more than MAX_ATTEMPTS times and we don't want to destroy jobs" do
     default = Delayed::Job.destroy_failed_jobs
     Delayed::Job.destroy_failed_jobs = false
@@ -212,8 +212,8 @@ describe Delayed::Job do
 
     it "should allow a second worker to get exclusive access if the timeout has passed" do
       @job.lock_exclusively!(1.minute, 'worker2').should == true
-    end      
-    
+    end
+
     it "should be able to get access to the task if it was started more then MAX_RUN_TIME ago" do
       @job.locked_at = Delayed::Job.db_time_now - 5.hours
       @job.save
@@ -240,9 +240,28 @@ describe Delayed::Job do
       @job.lock_exclusively! 5.minutes, 'worker1'
       @job.lock_exclusively! 5.minutes, 'worker1'
       @job.lock_exclusively! 5.minutes, 'worker1'
-    end                                        
-  end            
-  
+    end
+  end
+
+  context "when another worker has worked on a task since the job was found to be available, it" do
+
+    before :each do
+      Delayed::Job.worker_name = 'worker1'
+      @job = Delayed::Job.create :payload_object => SimpleJob.new
+      @job_copy_for_worker_2 = Delayed::Job.find(@job.id)
+    end
+
+    it "should not allow a second worker to get exclusive access if already successfully processed by worker1" do
+      @job.delete
+      @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
+    end
+
+    it "should not allow a second worker to get exclusive access if failed to be processed by worker1 and run_at time is now in future (due to backing off behaviour)" do
+      @job.update_attributes(:attempts => 1, :run_at => Delayed::Job.db_time_now + 1.day)
+      @job_copy_for_worker_2.lock_exclusively!(4.hours, 'worker2').should == false
+    end
+  end
+
   context "#name" do
     it "should be the class name of the job that was enqueued" do
       Delayed::Job.create(:payload_object => ErrorJob.new ).name.should == 'ErrorJob'
@@ -254,38 +273,38 @@ describe Delayed::Job do
 
     end
     it "should be the instance method that will be called if its a performable method object" do
-      story = Story.create :text => "..."                 
-      
+      story = Story.create :text => "..."
+
       story.send_later(:save)
-      
+
       Delayed::Job.last.name.should == 'Story#save'
     end
   end
-  
+
   context "worker prioritization" do
-    
+
     before(:each) do
       Delayed::Job.max_priority = nil
-      Delayed::Job.min_priority = nil      
+      Delayed::Job.min_priority = nil
     end
-  
+
     it "should only work_off jobs that are >= min_priority" do
       Delayed::Job.min_priority = -5
       Delayed::Job.max_priority = 5
       SimpleJob.runs.should == 0
-    
+
       Delayed::Job.enqueue SimpleJob.new, -10
       Delayed::Job.enqueue SimpleJob.new, 0
       Delayed::Job.work_off
-    
+
       SimpleJob.runs.should == 1
     end
-  
+
     it "should only work_off jobs that are <= max_priority" do
       Delayed::Job.min_priority = -5
       Delayed::Job.max_priority = 5
       SimpleJob.runs.should == 0
-    
+
       Delayed::Job.enqueue SimpleJob.new, 10
       Delayed::Job.enqueue SimpleJob.new, 0
 
@@ -293,7 +312,7 @@ describe Delayed::Job do
 
       SimpleJob.runs.should == 1
     end
-    
+
     it "should fetch jobs ordered by priority" do
       NUM = 10
       NUM.times { Delayed::Job.enqueue SimpleJob.new, rand(NUM) }
@@ -307,27 +326,27 @@ describe Delayed::Job do
       end
       ordered.should == true
     end
-   
+
   end
-  
+
   context "when pulling jobs off the queue for processing, it" do
     before(:each) do
       @job = Delayed::Job.create(
-        :payload_object => SimpleJob.new, 
-        :locked_by => 'worker1', 
+        :payload_object => SimpleJob.new,
+        :locked_by => 'worker1',
         :locked_at => Delayed::Job.db_time_now - 5.minutes)
     end
 
     it "should leave the queue in a consistent state and not run the job if locking fails" do
-      SimpleJob.runs.should == 0     
+      SimpleJob.runs.should == 0
       @job.stub!(:lock_exclusively!).with(any_args).once.and_return(false)
       Delayed::Job.should_receive(:find_available).once.and_return([@job])
       Delayed::Job.work_off(1)
       SimpleJob.runs.should == 0
     end
-  
+
   end
-  
+
   context "while running alongside other workers that locked jobs, it" do
     before(:each) do
       Delayed::Job.worker_name = 'worker1'
@@ -384,7 +403,7 @@ describe Delayed::Job do
       Time.zone = 'Eastern Time (US & Canada)'
       Delayed::Job.db_time_now.zone.should match /EST|EDT/
     end
-    
+
     it "should return UTC time if that is the AR default" do
       Time.zone = nil
       ActiveRecord::Base.default_timezone = :utc
@@ -397,5 +416,5 @@ describe Delayed::Job do
       Delayed::Job.db_time_now.zone.should_not == 'UTC'
     end
   end
-  
+
 end
