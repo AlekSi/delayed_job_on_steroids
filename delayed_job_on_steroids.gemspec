@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{delayed_job_on_steroids}
-  s.version = "1.7.0"
+  s.version = "1.7.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tobias L\303\274tke", "Aleksey Palazhchenko"]
@@ -19,6 +19,8 @@ Gem::Specification.new do |s|
     ".gitignore",
      "MIT-LICENSE",
      "README.textile",
+     "Rakefile",
+     "VERSION",
      "delayed_job_on_steroids.gemspec",
      "generators/delayed_job_migration/delayed_job_migration_generator.rb",
      "generators/delayed_job_migration/templates/migration.rb",
