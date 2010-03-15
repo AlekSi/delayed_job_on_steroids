@@ -191,11 +191,11 @@ describe Delayed::Job do
       @job.lock_exclusively!(1.minute, 'worker2').should == true
     end      
     
-    it "should be able to get access to the task if it was started more then max_age ago" do
-      @job.locked_at = 5.hours.ago
+    it "should be able to get access to the task if it was started more then MAX_RUN_TIME ago" do
+      @job.locked_at = Delayed::Job.db_time_now - 5.hours
       @job.save
 
-      @job.lock_exclusively! 4.hours, 'worker2'
+      @job.lock_exclusively!(4.hours, 'worker2').should == true
       @job.reload
       @job.locked_by.should == 'worker2'
       @job.locked_at.should > 1.minute.ago
