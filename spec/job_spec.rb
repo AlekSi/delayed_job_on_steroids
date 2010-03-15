@@ -292,7 +292,21 @@ describe Delayed::Job do
       Delayed::Job.work_off
 
       SimpleJob.runs.should == 1
-    end                         
+    end
+    
+    it "should fetch jobs ordered by priority" do
+      NUM = 10
+      NUM.times { Delayed::Job.enqueue SimpleJob.new, rand(NUM) }
+      jobs = Delayed::Job.find_available(NUM)
+      ordered = true
+      jobs[0..-2].each_index do |i|
+        if (jobs[i].priority < jobs[i+1].priority)
+          ordered = false
+          break
+        end
+      end
+      ordered.should == true
+    end
    
   end
   
