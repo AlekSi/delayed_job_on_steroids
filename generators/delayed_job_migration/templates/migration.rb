@@ -4,6 +4,7 @@ class CreateDelayedJobs < ActiveRecord::Migration
       t.integer  :priority, :default => 0      # Allows some jobs to jump to the front of the queue
       t.integer  :attempts, :default => 0      # Provides for retries, but still fail eventually.
       t.text     :handler                      # YAML-encoded string of the object that will do work
+      t.string   :job_type                     # Class name of the job object, for type-specific workers
       t.string   :last_error                   # reason for last failure (See Note below)
       t.datetime :run_at                       # When to run. Could be Time.now for immediately, or sometime in the future.
       t.datetime :locked_at                    # Set when a client is working on this object
@@ -14,6 +15,8 @@ class CreateDelayedJobs < ActiveRecord::Migration
     end
 
     add_index :delayed_jobs, :locked_by
+    add_index :delayed_jobs, :job_type
+    add_index :delayed_jobs, :priority
   end
 
   def self.down
