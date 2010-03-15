@@ -382,7 +382,7 @@ describe Delayed::Job do
   context "db_time_now" do
     it "should return time in current time zone if set" do
       Time.zone = 'Eastern Time (US & Canada)'
-      Delayed::Job.db_time_now.zone.should == 'EST'
+      Delayed::Job.db_time_now.zone.should match /EST|EDT/
     end
     
     it "should return UTC time if that is the AR default" do
