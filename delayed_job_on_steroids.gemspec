@@ -1,14 +1,14 @@
 #version = File.read('README.textile').scan(/^\*\s+([\d\.]+)/).flatten
 
 Gem::Specification.new do |s|
-  s.name     = "delayed_job"
+  s.name     = "delayed_job_on_steroids"
   s.version  = "1.7.0"
   s.date     = "2008-11-28"
-  s.summary  = "Database-backed asynchronous priority queue system -- Extracted from Shopify"
-  s.email    = "tobi@leetsoft.com"
-  s.homepage = "http://github.com/tobi/delayed_job/tree/master"
-  s.description = "Delated_job (or DJ) encapsulates the common pattern of asynchronously executing longer tasks in the background. It is a direct extraction from Shopify where the job table is responsible for a multitude of core tasks."
-  s.authors  = ["Tobias Lütke"]
+  s.summary  = "Database-backed asynchronous priority queue system, extended and improved"
+  s.email    = "aleksey.palazhchenko@gmail.com"
+  s.homepage = "http://github.com/AlekSi/delayed_job_on_steroids"
+  s.description = "Delated_job (or DJ) encapsulates the common pattern of asynchronously executing longer tasks in the background."
+  s.authors  = ["Tobias Lütke", "Aleksey Palazhchenko"]
 
   # s.bindir = "bin"
   # s.executables = ["delayed_job"]
@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.files = %w[
     MIT-LICENSE
     README.textile
-    delayed_job.gemspec
+    delayed_job_on_steroids.gemspec
     init.rb
     lib/delayed/job.rb
     lib/delayed/message_sending.rb
