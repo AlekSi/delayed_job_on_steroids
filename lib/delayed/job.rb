@@ -19,7 +19,7 @@ module Delayed
     self.destroy_failed_jobs = true
 
     # Every worker has a unique name which by default is the pid of the process.
-    # There are some advantages to overriding this with something which survives worker retarts:
+    # There are some advantages to overriding this with something which survives worker restarts:
     # Workers can safely resume working on tasks which are locked by themselves. The worker will assume that it crashed before.
     @@worker_name = nil
 

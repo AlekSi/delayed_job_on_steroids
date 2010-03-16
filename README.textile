@@ -88,20 +88,12 @@ h3. Running the jobs
 
 Run @script/generate delayed_job@ to add @script/delayed_job@. This script can then be used to manage a process which will start working off jobs.
 
-  # Runs two workers in separate processes.
-  $ ruby script/delayed_job -e production -n 2 start
-  $ ruby script/delayed_job -e production stop
+  $ ruby script/delayed_job
+  $ ruby script/delayed_job --job-types=SimpleJob    # to run only specific types of jobs
 
 Workers can be running on any computer, as long as they have access to the database and their clock is in sync. You can even
 run multiple workers on per computer, but you must give each one a unique name. (TODO: put in an example)
 Keep in mind that each worker will check the database at least every 5 seconds.
-
-If you only want to run specific types of jobs in a given worker, include them when initializing the worker:
-
-<pre><code>
-  Delayed::Worker.new(:job_types => "SimpleJob").start
-  Delayed::Worker.new(:job_types => ["SimpleJob", "NewsletterJob"]).start
-</pre></code>
 
 
 h2. About this fork
@@ -116,7 +108,7 @@ This gem is designed to be fully compatible with tobi's original code. The only 
 
 h3. Changes
 
-* 2.0.0: Added script to run as daemon and control it.
+* 2.0.0: TODO: Added script to run as daemon and control it.
          Timeout for job execution.
          Added send_at method for queueing jobs in the future.
 

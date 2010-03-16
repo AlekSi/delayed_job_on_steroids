@@ -1,51 +1,40 @@
-require 'rubygems'
-require 'daemons'
 require 'optparse'
 
 module Delayed
+
+  # Used by script/delayed_job: parses options, sets logger, invokes Worker.
   class Command
     attr_accessor :worker_count
 
-    def initialize(args)
-      @options = {:quiet => true}
+    def initialize
+      @options = {:quiet => false}
+
       @worker_count = 1
 
-      opts = OptionParser.new do |opts|
-        opts.banner = "Usage: #{File.basename($0)} [options] start|stop|restart|run"
+      ARGV.clone.options do |opts|
+        opts.separator ""
+        opts.on('--min-priority=number', 'Minimum priority of jobs to run.') { |n| @options[:min_priority] = n }
+        opts.on('--max-priority=number', 'Maximum priority of jobs to run.') { |n| @options[:max_priority] = n }
+        opts.on('--job-types=type', String, 'Type of jobs to run.') { |t| @options[:job_types] = t }
+#        opts.on("-d", "--daemon", "Make worker run as a Daemon.") { @options[:detach] = true }
+#        opts.on('-n', '--number-of-workers=number', "Number of unique workers to spawn.") { |n| @worker_count = (n.to_i rescue 1) }
+#        opts.on("-e", "--environment=name", String,
+#          "Specifies the environment to run this worker under (test/development/production).",
+#          "Default: development") { |e| @options[:environment] = e }
 
-        opts.on('-h', '--help', 'Show this message') do
-          puts opts
-          exit 1
-        end
-        opts.on('-e', '--environment=NAME', 'Specifies the environment to run this delayed jobs under (test/development/production).') do |e|
-          ENV['RAILS_ENV'] = e
-        end
-        opts.on('-min', '--min-priority=N', 'Minimum priority of jobs to run.') do |n|
-          @options[:min_priority] = n
-        end
-        opts.on('-max', '--max-priority=N', 'Maximum priority of jobs to run.') do |n|
-          @options[:max_priority] = n
-        end
-        opts.on('-n', '--number-of-workers=N', "Number of unique workers to spawn.") do |worker_count|
-          @worker_count = worker_count.to_i rescue 1
-        end
+        opts.on("-h", "--help", "Show this help message.") { puts opts; exit }
+        opts.parse!
       end
-      @args = opts.parse!(args)
     end
 
     def daemonize
-      worker_count.times do |worker_index|
-        process_name = "delayed_job.#{worker_index}"
-        Daemons.run_proc(process_name, :dir => "#{RAILS_ROOT}/tmp/pids", :dir_mode => :normal, :ARGV => @args) do |*args|
-          run(process_name)
-        end
-      end
+      run
     end
 
     def run(worker_name = nil)
       Dir.chdir(RAILS_ROOT)
 
-      # Replace the default logger…too bad Rails doesn't make this easier
+      # Replace the default logger... too bad Rails doesn't make this easier
       Rails.logger.instance_eval do
         @log.reopen File.join(RAILS_ROOT, 'log', 'delayed_job.log')
       end

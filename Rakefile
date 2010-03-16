@@ -10,7 +10,6 @@ begin
     gem.email = "aleksey.palazhchenko@gmail.com"
     gem.homepage = "http://github.com/AlekSi/delayed_job_on_steroids"
     gem.authors = ["Tobias Lütke", "Aleksey Palazhchenko"]
-    gem.add_runtime_dependency "daemons", ">= 1.0.10"
     gem.add_development_dependency "rspec", ">= 1.2.9"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end

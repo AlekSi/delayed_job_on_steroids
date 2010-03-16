@@ -7,6 +7,7 @@ module Delayed
       RAILS_DEFAULT_LOGGER
     end
 
+    # Options: +:min_priority+, +:max_priority+, +:job_types+, +:quiet+
     def initialize(options={})
       @quiet = options[:quiet]
       Delayed::Job.min_priority = options[:min_priority] if options.has_key?(:min_priority)
@@ -14,6 +15,7 @@ module Delayed
       Delayed::Job.job_types    = options[:job_types]    if options.has_key?(:job_types)
     end
 
+    # Starts worker
     def start
       say "*** Starting job worker #{Delayed::Job.worker_name}"
 
