@@ -2,8 +2,27 @@
 task :environment
 
 namespace :jobs do
-  desc "Clear the delayed_job queue."
-  task :clear => [:environment] do
-    Delayed::Job.delete_all
+
+  namespace :clear do
+    desc "Remove failed jobs from delayed_job queue"
+    task :failed => [:environment] do
+      Delayed::Job.delete_all("failed_at IS NOT NULL")
+    end
+
+    desc "Clear entire delayed_job queue"
+    task :all => [:environment] do
+      Delayed::Job.delete_all
+    end
+  end
+
+  # Deprecated synonim
+  task :clear => ['clear:all']
+
+  desc "Report delayed_job statistics"
+  task :stats => [:environment] do
+    jobs = Delayed::Job.all
+    puts "Active jobs        : #{ jobs.count{ |job| job.locked_by } }"
+    puts "Scheduled jobs     : #{ jobs.count{ |job| not job.locked_by and not job.failed? } }"
+    puts "Failed stored jobs : #{ jobs.count{ |job| job.failed? } }"
   end
 end

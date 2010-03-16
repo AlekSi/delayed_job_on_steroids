@@ -104,11 +104,6 @@ If you only want to run specific types of jobs in a given worker, include them w
 </pre></code>
 
 
-h2. Cleaning up
-
-You can invoke @rake jobs:clear@ to delete all jobs in the queue.
-
-
 h2. About this fork
 
 This fork was born to introduce new features to delayed_job, but also to be fully comatible with it.
