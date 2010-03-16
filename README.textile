@@ -118,6 +118,8 @@ You can invoke @rake jobs:clear@ to delete all jobs in the queue.
 
 h3. Changes
 
+* 1.7.5: Added possibility to run only specific types of jobs.
+
 * 1.7.0: Added failed_at column which can optionally be set after a certain amount of failed job attempts. By default failed job attempts are destroyed after about a month. 
 
 * 1.6.0: Renamed locked_until to locked_at. We now store when we start a given job instead of how long it will be locked by the worker. This allows us to get a reading on how long a job took to execute.                    
