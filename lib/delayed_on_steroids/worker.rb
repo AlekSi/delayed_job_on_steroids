@@ -1,5 +1,7 @@
 module Delayed
   class Worker
+    include Singleton
+
     SLEEP = 5
 
     cattr_accessor :logger
@@ -7,12 +9,14 @@ module Delayed
       RAILS_DEFAULT_LOGGER
     end
 
-    # Options: +:min_priority+, +:max_priority+, +:job_types+, +:quiet+
-    def initialize(options={})
-      @quiet = options[:quiet]
-      Delayed::Job.min_priority = options[:min_priority] if options.has_key?(:min_priority)
-      Delayed::Job.max_priority = options[:max_priority] if options.has_key?(:max_priority)
-      Delayed::Job.job_types    = options[:job_types]    if options.has_key?(:job_types)
+    attr_accessor :min_priority, :max_priority
+    attr_accessor :job_types
+    attr_accessor :quiet
+
+    def initialize
+      # Delayed::Job.min_priority = options[:min_priority] if options.has_key?(:min_priority)
+      # Delayed::Job.max_priority = options[:max_priority] if options.has_key?(:max_priority)
+      # Delayed::Job.job_types    = options[:job_types]    if options.has_key?(:job_types)
     end
 
     # Starts worker
