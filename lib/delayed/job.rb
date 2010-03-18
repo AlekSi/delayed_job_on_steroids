@@ -6,7 +6,7 @@ module Delayed
   end
 
   # A job object that is persisted to the database.
-  # Contains the work object as a YAML field.
+  # Contains the work object as a YAML field +handler+.
   class Job < ActiveRecord::Base
     MAX_ATTEMPTS = 25
     MAX_RUN_TIME = 4.hours
@@ -18,27 +18,11 @@ module Delayed
     cattr_accessor :destroy_failed_jobs
     self.destroy_failed_jobs = true
 
-    # Every worker has a unique name which by default is the pid of the process.
-    # There are some advantages to overriding this with something which survives worker restarts:
-    # Workers can safely resume working on tasks which are locked by themselves. The worker will assume that it crashed before.
-    @@worker_name = nil
-
-    def self.worker_name
-      return @@worker_name unless @@worker_name.nil?
-      "host:#{Socket.gethostname} pid:#{Process.pid}" rescue "pid:#{Process.pid}"
-    end
-
-    def self.worker_name=(val)
-      @@worker_name = val
-    end
-
-    def worker_name
-      self.class.worker_name
-    end
-
-    def worker_name=(val)
-      @@worker_name = val
-    end
+    # Every worker has a unique name which by default is the hostname and the pid of the process.
+    # There is advantage to overriding this with something which survives worker restarts:
+    # workers can safely resume working on tasks which are locked by themselves (the worker will assume that it crashed before).
+    cattr_accessor :worker_name
+    self.worker_name = ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
 
     NextTaskSQL         = '(run_at <= ? AND (locked_at IS NULL OR locked_at < ?) OR (locked_by = ?)) AND failed_at IS NULL'
     NextTaskOrder       = 'priority DESC, run_at ASC'
