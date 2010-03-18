@@ -125,19 +125,19 @@ module Delayed
 
       conditions = [time_now, time_now - max_run_time, worker_name]
 
-      if self.min_priority
+      if Worker.min_priority
         sql << ' AND (priority >= ?)'
-        conditions << min_priority
+        conditions << Worker.min_priority
       end
 
-      if self.max_priority
+      if Worker.max_priority
         sql << ' AND (priority <= ?)'
-        conditions << max_priority
+        conditions << Worker.max_priority
       end
 
-      if self.job_types
+      if Worker.job_types
         sql << ' AND (job_type IN (?))'
-        conditions << job_types
+        conditions << Worker.job_types
       end
 
       conditions.unshift(sql)

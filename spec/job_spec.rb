@@ -24,8 +24,8 @@ end
 
 describe Delayed::Job do
   before  do
-    Delayed::Job.max_priority = nil
-    Delayed::Job.min_priority = nil
+    Delayed::Worker.max_priority = nil
+    Delayed::Worker.min_priority = nil
 
     Delayed::Job.delete_all
   end
@@ -77,25 +77,25 @@ describe Delayed::Job do
   it "should work on specified job types" do
     SimpleJob.runs.should == 0
 
-    Delayed::Job.job_types = "SimpleJob"
+    Delayed::Worker.job_types = "SimpleJob"
     Delayed::Job.enqueue SimpleJob.new
     Delayed::Job.work_off
 
     SimpleJob.runs.should == 1
 
-    Delayed::Job.job_types = nil
+    Delayed::Worker.job_types = nil
   end
 
   it "should not work on unspecified job types" do
     SimpleJob.runs.should == 0
 
-    Delayed::Job.job_types = "AnotherJob"
+    Delayed::Worker.job_types = "AnotherJob"
     Delayed::Job.enqueue SimpleJob.new
     Delayed::Job.work_off
 
     SimpleJob.runs.should == 0
 
-    Delayed::Job.job_types = nil
+    Delayed::Worker.job_types = nil
   end
 
   it "should allow to specify job tag" do
@@ -316,13 +316,13 @@ describe Delayed::Job do
   context "worker prioritization" do
 
     before(:each) do
-      Delayed::Job.max_priority = nil
-      Delayed::Job.min_priority = nil
+      Delayed::Worker.max_priority = nil
+      Delayed::Worker.min_priority = nil
     end
 
     it "should only work_off jobs that are >= min_priority" do
-      Delayed::Job.min_priority = -5
-      Delayed::Job.max_priority = 5
+      Delayed::Worker.min_priority = -5
+      Delayed::Worker.max_priority = 5
       SimpleJob.runs.should == 0
 
       Delayed::Job.enqueue SimpleJob.new, -10
@@ -333,8 +333,8 @@ describe Delayed::Job do
     end
 
     it "should only work_off jobs that are <= max_priority" do
-      Delayed::Job.min_priority = -5
-      Delayed::Job.max_priority = 5
+      Delayed::Worker.min_priority = -5
+      Delayed::Worker.max_priority = 5
       SimpleJob.runs.should == 0
 
       Delayed::Job.enqueue SimpleJob.new, 10
