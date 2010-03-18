@@ -98,6 +98,10 @@ describe Delayed::Job do
     Delayed::Job.job_types = nil
   end
 
+  it "should allow to specify job tag" do
+    Delayed::Job.create(:payload_object => ErrorJob.new, :job_tag => 'my tag' ).job_tag.should == 'my tag'
+  end
+
   it "should work with eval jobs" do
     $eval_job_ran = false
 

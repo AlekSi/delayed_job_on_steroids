@@ -5,6 +5,7 @@ class CreateDelayedJobs < ActiveRecord::Migration
       t.integer  :attempts, :default => 0      # Provides for retries, but still fail eventually.
       t.text     :handler                      # YAML-encoded string of the object that will do work
       t.string   :job_type                     # Class name of the job object, for type-specific workers
+      t.string   :job_tag                      # Helps to locate this job among others of the same type, not used by DJ
       t.text     :last_error                   # reason for last failure (See Note below)
       t.datetime :run_at                       # When to run. Could be Time.now for immediately, or sometime in the future.
       t.datetime :locked_at                    # Set when a client is working on this object
@@ -16,6 +17,7 @@ class CreateDelayedJobs < ActiveRecord::Migration
 
     add_index :delayed_jobs, :locked_by
     add_index :delayed_jobs, :job_type
+    add_index :delayed_jobs, :job_identifier
     add_index :delayed_jobs, :priority
   end
 

@@ -19,6 +19,7 @@ ActiveRecord::Schema.define do
     table.integer  :attempts, :default => 0
     table.text     :handler
     table.string   :job_type
+    table.string   :job_tag
     table.string   :last_error
     table.datetime :run_at
     table.datetime :locked_at
