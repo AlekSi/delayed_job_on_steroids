@@ -20,12 +20,6 @@ module Delayed
     cattr_accessor :destroy_failed_jobs
     self.destroy_failed_jobs = true
 
-    # Every worker has a unique name which by default is the hostname and the pid of the process.
-    # There is advantage to overriding this with something which survives worker restarts:
-    # workers can safely resume working on tasks which are locked by themselves (the worker will assume that it crashed before).
-    cattr_accessor :worker_name
-    self.worker_name = ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
-
     NextTaskSQL         = '(run_at <= ? AND (locked_at IS NULL OR locked_at < ?) OR (locked_by = ?)) AND failed_at IS NULL'
     NextTaskOrder       = 'priority DESC, run_at ASC'
 

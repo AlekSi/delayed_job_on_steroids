@@ -13,6 +13,12 @@ module Delayed
     cattr_accessor :job_types
     cattr_accessor :quiet
 
+    # Every worker has a unique name which by default is the hostname and the pid of the process.
+    # There is advantage to overriding this with something which survives worker restarts:
+    # workers can safely resume working on tasks which are locked by themselves (the worker will assume that it crashed before).
+    cattr_accessor :name
+    @@name = ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
+
     def initialize
       # Delayed::Job.min_priority = options[:min_priority] if options.has_key?(:min_priority)
       # Delayed::Job.max_priority = options[:max_priority] if options.has_key?(:max_priority)
