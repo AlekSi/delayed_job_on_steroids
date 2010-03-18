@@ -79,9 +79,9 @@ module Delayed
 
 
     # Try to run one job. Returns true/false (work done/work failed) or nil if job can't be locked.
-    def run_with_lock(max_run_time, worker_name)
+    def run_with_lock(max_run_time, worker = worker_name)
       logger.info "* [JOB] acquiring lock on #{name}"
-      unless lock_exclusively!(max_run_time, worker_name)
+      unless lock_exclusively!(max_run_time, worker)
         # We did not get the lock, some other worker process must have
         logger.warn "* [JOB] failed to acquire exclusive lock for #{name}"
         return nil # no work done
