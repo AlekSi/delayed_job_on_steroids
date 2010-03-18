@@ -9,9 +9,9 @@ module Delayed
       RAILS_DEFAULT_LOGGER
     end
 
-    attr_accessor :min_priority, :max_priority
-    attr_accessor :job_types
-    attr_accessor :quiet
+    cattr_accessor :min_priority, :max_priority
+    cattr_accessor :job_types
+    cattr_accessor :quiet
 
     def initialize
       # Delayed::Job.min_priority = options[:min_priority] if options.has_key?(:min_priority)
@@ -51,7 +51,7 @@ module Delayed
     end
 
     def say(text)
-      puts text unless @quiet
+      puts text unless quiet
       logger.info text if logger
     end
 

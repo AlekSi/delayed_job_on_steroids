@@ -8,6 +8,8 @@ module Delayed
   # A job object that is persisted to the database.
   # Contains the work object as a YAML field +handler+.
   class Job < ActiveRecord::Base
+    extend JobDeprecations
+
     MAX_ATTEMPTS = 25
     MAX_RUN_TIME = 4.hours
     set_table_name :delayed_jobs
@@ -28,11 +30,6 @@ module Delayed
     NextTaskOrder       = 'priority DESC, run_at ASC'
 
     ParseObjectFromYaml = /\!ruby\/\w+\:([^\s]+)/
-
-    cattr_accessor :min_priority, :max_priority, :job_types
-    self.min_priority = nil
-    self.max_priority = nil
-    self.job_types    = nil
 
     # When a worker is exiting, make sure we don't have any locked jobs.
     def self.clear_locks!
