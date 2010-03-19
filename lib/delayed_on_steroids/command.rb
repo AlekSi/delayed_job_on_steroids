@@ -15,6 +15,7 @@ module Delayed
         opts.on('--min-priority=number', Integer, 'Minimum priority of jobs to run.')    { |n| Delayed::Worker.min_priority = n }
         opts.on('--max-priority=number', Integer, 'Maximum priority of jobs to run.')    { |n| Delayed::Worker.max_priority = n }
         opts.on('--job-types=types', String, 'Type of jobs to run.')                     { |t| Delayed::Worker.job_types = t.split(',') }
+        opts.on('--keep-failed-jobs', 'Do not remove failed jobs from database.')        { Delayed::Worker.destroy_failed_jobs = false }
         opts.on("-d", "--daemon", "Make worker run as a Daemon.")                        { @run_as_daemon = true }
         opts.on('-n', '--number-of-workers=number', Integer, "Number of unique workers to spawn. Implies -d option if number > 1.") do |n|
           @worker_count = ([n, 1].max rescue 1)
