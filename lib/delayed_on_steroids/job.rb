@@ -27,7 +27,7 @@ module Delayed
 
     # When a worker is exiting, make sure we don't have any locked jobs.
     def self.clear_locks!
-      update_all("locked_by = null, locked_at = null", ["locked_by = ?", worker_name])
+      update_all("locked_by = null, locked_at = null", ["locked_by = ?", Worker.name])
     end
 
     def failed?
@@ -73,7 +73,7 @@ module Delayed
 
 
     # Try to run one job. Returns true/false (work done/work failed) or nil if job can't be locked.
-    def run_with_lock(max_run_time, worker = worker_name)
+    def run_with_lock(max_run_time, worker = Worker.name)
       logger.info "* [JOB] acquiring lock on #{name}"
       unless lock_exclusively!(max_run_time, worker)
         # We did not get the lock, some other worker process must have
@@ -117,7 +117,7 @@ module Delayed
 
       sql = NextTaskSQL.dup
 
-      conditions = [time_now, time_now - max_run_time, worker_name]
+      conditions = [time_now, time_now - max_run_time, Worker.name]
 
       if Worker.min_priority
         sql << ' AND (priority >= ?)'
@@ -148,7 +148,7 @@ module Delayed
       # We get up to 5 jobs from the db. In case we cannot get exclusive access to a job we try the next.
       # this leads to a more even distribution of jobs across the worker processes
       find_available(5, max_run_time).each do |job|
-        t = job.run_with_lock(max_run_time, worker_name)
+        t = job.run_with_lock(max_run_time, Worker.name)
         return t unless t == nil  # return if we did work (good or bad)
       end
 
