@@ -69,9 +69,9 @@ module Delayed
     end
 
     # Try to run one job. Returns true/false (work done/work failed) or nil if job can't be locked.
-    def run_with_lock(max_run_time = MAX_RUN_TIME, worker = Worker.name)
+    def run_with_lock(max_run_time = MAX_RUN_TIME, worker_name = Worker.name)
       logger.info "* [JOB] acquiring lock on #{name}"
-      unless lock_exclusively!(max_run_time, worker)
+      unless lock_exclusively!(max_run_time, worker_name)
         # We did not get the lock, some other worker process must have
         logger.warn "* [JOB] failed to acquire exclusive lock for #{name}"
         return nil # no work done
@@ -166,19 +166,19 @@ module Delayed
 
     # Lock this job for this worker.
     # Returns true if we have the lock, false otherwise.
-    def lock_exclusively!(max_run_time = MAX_RUN_TIME, worker = worker_name)
+    def lock_exclusively!(max_run_time = MAX_RUN_TIME, worker_name = Worker.name)
       now = self.class.db_time_now
-      affected_rows = if locked_by != worker
+      affected_rows = if locked_by != worker_name
         # We don't own this job so we will update the locked_by name and the locked_at
-        self.class.update_all(["locked_at = ?, locked_by = ?", now, worker], ["id = ? and (locked_at is null or locked_at < ?) and (run_at <= ?)", id, (now - max_run_time.to_i), now])
+        self.class.update_all(["locked_at = ?, locked_by = ?", now, worker_name], ["id = ? and (locked_at is null or locked_at < ?) and (run_at <= ?)", id, (now - max_run_time.to_i), now])
       else
         # We already own this job, this may happen if the job queue crashes.
         # Simply resume and update the locked_at
-        self.class.update_all(["locked_at = ?", now], ["id = ? and locked_by = ?", id, worker])
+        self.class.update_all(["locked_at = ?", now], ["id = ? and locked_by = ?", id, worker_name])
       end
       if affected_rows == 1
         self.locked_at    = now
-        self.locked_by    = worker
+        self.locked_by    = worker_name
         return true
       else
         return false
