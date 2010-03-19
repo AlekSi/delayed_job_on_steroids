@@ -37,7 +37,10 @@ class StoryReader
 end
 
 describe 'random ruby objects' do
-  before       { Delayed::Job.delete_all }
+  before do
+    Delayed::Worker.name = 'worker'
+    Delayed::Job.delete_all
+  end
 
   it "should respond_to :send_later method" do
 
@@ -78,7 +81,7 @@ describe 'random ruby objects' do
 
     Delayed::Job.count.should == 1
 
-    Delayed::Job.reserve_and_run_one_job
+    Delayed::Job.reserve_and_run_one_job.should == true
 
     Delayed::Job.count.should == 0
 

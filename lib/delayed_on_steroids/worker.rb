@@ -13,11 +13,11 @@ module Delayed
     cattr_accessor :job_types
     cattr_accessor :quiet
 
-    # Every worker has a unique name which by default is the hostname and the pid of the process.
-    # There is advantage to overriding this with something which survives worker restarts:
+    # Every worker should has a unique name.
+    # If wasn't assigned, it will be generated from the hostname and the pid of the process at +start+.
+    # There is advantage to assign name manually:
     # workers can safely resume working on tasks which are locked by themselves (the worker will assume that it crashed before).
     cattr_accessor :name
-    @@name = ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
 
     # By default failed jobs are destroyed after too many attempts.
     # If you want to keep them around (perhaps to inspect the reason for the failure), set this to false.
@@ -32,7 +32,8 @@ module Delayed
 
     # Starts worker
     def start
-      say "*** Starting job worker #{Delayed::Job.worker_name}"
+      @@name ||= ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
+      say "*** Starting job worker #{@@name}"
 
       trap('TERM') { say 'Exiting...'; $exit = true }
       trap('INT')  { say 'Exiting...'; $exit = true }
@@ -59,7 +60,7 @@ module Delayed
 
     ensure
       # When a worker is exiting, make sure we don't have any locked jobs.
-      Delayed::Job.update_all("locked_by = null, locked_at = null", ["locked_by = ?", Worker.name])
+      Delayed::Job.update_all("locked_by = null, locked_at = null", ["locked_by = ?", @@name])
     end
 
     def say(text)
