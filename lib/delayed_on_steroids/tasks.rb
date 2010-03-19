@@ -21,8 +21,8 @@ namespace :jobs do
   desc "Report delayed_job statistics"
   task :stats => [:environment] do
     jobs = Delayed::Job.all
-    puts "Active jobs        : #{ jobs.count{ |job| job.locked_by } }"
-    puts "Scheduled jobs     : #{ jobs.count{ |job| not job.locked_by and not job.failed? } }"
+    puts "Active jobs        : #{ jobs.count{ |job| job.locked? } }"
+    puts "Scheduled jobs     : #{ jobs.count{ |job| not (job.locked? or job.failed?) } }"
     puts "Failed stored jobs : #{ jobs.count{ |job| job.failed? } }"
   end
 end

@@ -24,6 +24,12 @@ module Delayed
     end
     alias_method :failed, :failed?
 
+    # Returns +true+ if current job locked.
+    def locked?
+      not locked_at.nil?
+    end
+    alias_method :locked, :locked?
+
     def payload_object
       @payload_object ||= deserialize(self['handler'])
     end
