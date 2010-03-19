@@ -58,7 +58,8 @@ module Delayed
       end
 
     ensure
-      Delayed::Job.clear_locks!
+      # When a worker is exiting, make sure we don't have any locked jobs.
+      Delayed::Job.update_all("locked_by = null, locked_at = null", ["locked_by = ?", Worker.name])
     end
 
     def say(text)

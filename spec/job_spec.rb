@@ -300,8 +300,8 @@ describe Delayed::Job do
     end
 
     it "should be the method that will be called if its a performable method object" do
-      Delayed::Job.send_later(:clear_locks!)
-      Delayed::Job.last.name.should == 'Delayed::Job.clear_locks!'
+      Delayed::Job.send_later(:db_time_now)
+      Delayed::Job.last.name.should == 'Delayed::Job.db_time_now'
 
     end
     it "should be the instance method that will be called if its a performable method object" do

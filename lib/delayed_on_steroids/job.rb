@@ -16,11 +16,6 @@ module Delayed
 
     ParseObjectFromYaml = /\!ruby\/\w+\:([^\s]+)/
 
-    # When a worker is exiting, make sure we don't have any locked jobs.
-    def self.clear_locks!
-      update_all("locked_by = null, locked_at = null", ["locked_by = ?", Worker.name])
-    end
-
     # Returns +true+ if current job failed.
     def failed?
       not failed_at.nil?
@@ -60,7 +55,7 @@ module Delayed
         save!
       else
         logger.info "* [JOB] PERMANENTLY removing #{self.name} because of #{attempts} consequetive failures."
-        Worker.destroy_failed_jobs ? destroy : update_attribute(:failed_at, Delayed::Job.db_time_now)
+        Worker.destroy_failed_jobs ? destroy : update_attribute(:failed_at, self.class.db_time_now)
       end
     end
 
