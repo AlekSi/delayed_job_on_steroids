@@ -19,7 +19,6 @@ module M
     cattr_accessor :runs; self.runs = 0
     def perform; @@runs += 1; end
   end
-
 end
 
 describe Delayed::Job do
@@ -32,6 +31,13 @@ describe Delayed::Job do
 
   before(:each) do
     SimpleJob.runs = 0
+  end
+
+  it "responds to deprecated methods moved to Worker" do
+    Delayed::JobDeprecations.instance_methods.each do |m|
+      Delayed::Job.respond_to?(m).should == true
+      silence_warnings { Delayed::Job.send(m) } unless m.to_s =~ /=$/
+    end
   end
 
   it "should set run_at automatically if not set" do
@@ -208,12 +214,12 @@ describe Delayed::Job do
       it "should be failed if it failed more than MAX_ATTEMPTS times" do
         @job.reload.failed_at.should == nil
         Delayed::Job::MAX_ATTEMPTS.times { @job.reschedule 'FAIL' }
-        @job.reload.failed_at.should_not == nil
+        @job.reload.failed?.should == true
       end
 
       it "should not be failed if it failed fewer than MAX_ATTEMPTS times" do
         (Delayed::Job::MAX_ATTEMPTS - 1).times { @job.reschedule 'FAIL' }
-        @job.reload.failed_at.should == nil
+        @job.reload.failed?.should == false
       end
 
     end
@@ -252,6 +258,7 @@ describe Delayed::Job do
 
       @job.lock_exclusively!(4.hours, 'worker2').should == true
       @job.reload
+      @job.locked?.should == true
       @job.locked_by.should == 'worker2'
       @job.locked_at.should > 1.minute.ago
     end
@@ -349,14 +356,7 @@ describe Delayed::Job do
       NUM = 10
       NUM.times { Delayed::Job.enqueue SimpleJob.new, rand(NUM) }
       jobs = Delayed::Job.find_available(NUM)
-      ordered = true
-      jobs[0..-2].each_index do |i|
-        if (jobs[i].priority < jobs[i+1].priority)
-          ordered = false
-          break
-        end
-      end
-      ordered.should == true
+      jobs[0..-2].each_index { |i| (jobs[i].priority >= jobs[i+1].priority).should == true }
     end
 
   end
