@@ -14,9 +14,6 @@ module Delayed
     MAX_RUN_TIME = 4.hours
     set_table_name :delayed_jobs
 
-    NextTaskSQL         = '(run_at <= ? AND (locked_at IS NULL OR locked_at < ?) OR (locked_by = ?)) AND failed_at IS NULL'
-    NextTaskOrder       = 'priority DESC, run_at ASC'
-
     ParseObjectFromYaml = /\!ruby\/\w+\:([^\s]+)/
 
     # When a worker is exiting, make sure we don't have any locked jobs.
@@ -24,8 +21,9 @@ module Delayed
       update_all("locked_by = null, locked_at = null", ["locked_by = ?", Worker.name])
     end
 
+    # Returns +true+ if current job failed.
     def failed?
-      failed_at
+      not failed_at.nil?
     end
     alias_method :failed, :failed?
 
@@ -33,6 +31,12 @@ module Delayed
       @payload_object ||= deserialize(self['handler'])
     end
 
+    def payload_object=(object)
+      self['job_type'] = object.class.to_s
+      self['handler']  = object.to_yaml
+    end
+
+    # Returns job name.
     def name
       @name ||= begin
         payload = payload_object
@@ -44,13 +48,8 @@ module Delayed
       end
     end
 
-    def payload_object=(object)
-      self['job_type'] = object.class.to_s
-      self['handler']  = object.to_yaml
-    end
-
-    # Reschedule the job in the future (when a job fails).
-    # Uses an exponential scale depending on the number of failed attempts.
+    # Reschedule the job to run at +time+ (when a job fails).
+    # If +time+ is nil it uses an exponential scale depending on the number of failed attempts.
     def reschedule(message, backtrace = [], time = nil)
       if (self.attempts += 1) < MAX_ATTEMPTS
         time ||= Job.db_time_now + (attempts ** 4) + 5
@@ -65,9 +64,8 @@ module Delayed
       end
     end
 
-
     # Try to run one job. Returns true/false (work done/work failed) or nil if job can't be locked.
-    def run_with_lock(max_run_time, worker = Worker.name)
+    def run_with_lock(max_run_time = MAX_RUN_TIME, worker = Worker.name)
       logger.info "* [JOB] acquiring lock on #{name}"
       unless lock_exclusively!(max_run_time, worker)
         # We did not get the lock, some other worker process must have
@@ -80,25 +78,24 @@ module Delayed
           Timeout.timeout(max_run_time.to_i) { invoke_job }
           destroy
         end
-        # TODO: warn if runtime > max_run_time ?
         logger.info "* [JOB] #{name} completed after %.4f" % runtime
         return true  # did work
       rescue Exception => e
-        reschedule e.message, e.backtrace
+        reschedule(e.message, e.backtrace)
         log_exception(e)
         return false  # work failed
       end
     end
 
-    # Add a job to the queue
+    # Add a job to the queue. Arguments: priority, run_at.
     def self.enqueue(*args, &block)
       object = block_given? ? EvaledJob.new(&block) : args.shift
 
       unless object.respond_to?(:perform) || block_given?
         raise ArgumentError, 'Cannot enqueue items which do not respond to perform'
       end
-    
-      priority = args.first || 0
+
+      priority = args[0] || 0
       run_at   = args[1]
 
       Job.create(:payload_object => object, :priority => priority.to_i, :run_at => run_at)
@@ -106,12 +103,29 @@ module Delayed
 
     # Find a few candidate jobs to run (in case some immediately get locked by others).
     def self.find_available(limit = 5, max_run_time = MAX_RUN_TIME)
-
       time_now = db_time_now
+      sql = ''
+      conditions = []
 
-      sql = NextTaskSQL.dup
+      # 1) not scheduled in the future
+      sql << '(run_at <= ?)'
+      conditions << time_now
 
-      conditions = [time_now, time_now - max_run_time, Worker.name]
+      # 2) and job is not failed yet
+      sql << ' AND (failed_at IS NULL)'
+
+      # 3a) and already locked by same worker
+      sql << ' AND ('
+      sql << '(locked_by = ?)'
+      conditions << Worker.name
+
+      # 3b) or not locked yet
+      sql << ' OR (locked_at IS NULL)'
+
+      # 3c) or lock expired
+      sql << ' OR (locked_at < ?)'
+      sql << ')'
+      conditions << time_now - max_run_time
 
       if Worker.min_priority
         sql << ' AND (priority >= ?)'
@@ -129,29 +143,26 @@ module Delayed
       end
 
       conditions.unshift(sql)
-
-      ActiveRecord::Base.silence do
-        find(:all, :conditions => conditions, :order => NextTaskOrder, :limit => limit)
-      end
+      find(:all, :conditions => conditions, :order => 'priority DESC, run_at ASC', :limit => limit)
     end
 
     # Run the next job we can get an exclusive lock on.
     # If no jobs are left we return nil
     def self.reserve_and_run_one_job(max_run_time = MAX_RUN_TIME)
 
-      # We get up to 5 jobs from the db. In case we cannot get exclusive access to a job we try the next.
+      # We get up to 20 jobs from the db. In case we cannot get exclusive access to a job we try the next.
       # this leads to a more even distribution of jobs across the worker processes
-      find_available(5, max_run_time).each do |job|
+      find_available(20, max_run_time).each do |job|
         t = job.run_with_lock(max_run_time, Worker.name)
         return t unless t == nil  # return if we did work (good or bad)
       end
 
-      nil # we didn't do any work, all 5 were not lockable
+      nil # we didn't do any work, all 20 were not lockable
     end
 
     # Lock this job for this worker.
     # Returns true if we have the lock, false otherwise.
-    def lock_exclusively!(max_run_time, worker = worker_name)
+    def lock_exclusively!(max_run_time = MAX_RUN_TIME, worker = worker_name)
       now = self.class.db_time_now
       affected_rows = if locked_by != worker
         # We don't own this job so we will update the locked_by name and the locked_at
@@ -178,7 +189,7 @@ module Delayed
 
     # This is a good hook if you need to report job processing errors in additional or different ways
     def log_exception(error)
-      logger.error "* [JOB] #{name} failed with #{error.class.name}: #{error.message} - #{attempts} failed attempts"
+      logger.error("* [JOB] #{name} failed with #{error.class.name}: #{error.message} - #{attempts} failed attempts")
       logger.error(error)
     end
 
@@ -207,6 +218,19 @@ module Delayed
       payload_object.perform
     end
 
+    # Get the current time (GMT or local depending on DB)
+    # Note: This does not ping the DB to get the time, so all your clients
+    # must have syncronized clocks.
+    def self.db_time_now
+      if Time.zone
+        Time.zone.now
+      elsif ActiveRecord::Base.default_timezone == :utc
+        Time.now.utc
+      else
+        Time.now
+      end
+    end
+
   private
 
     def deserialize(source)
@@ -233,19 +257,6 @@ module Delayed
     # its auto loading magic. Will raise LoadError if not successful.
     def attempt_to_load(klass)
        klass.constantize
-    end
-
-    # Get the current time (GMT or local depending on DB)
-    # Note: This does not ping the DB to get the time, so all your clients
-    # must have syncronized clocks.
-    def self.db_time_now
-      if Time.zone
-        Time.zone.now
-      elsif ActiveRecord::Base.default_timezone == :utc
-        Time.now.utc
-      else
-        Time.now
-      end
     end
 
   protected
