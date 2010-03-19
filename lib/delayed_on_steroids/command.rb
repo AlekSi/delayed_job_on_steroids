@@ -34,7 +34,10 @@ module Delayed
       return if @worker_count == 1
       while @worker_count > 0
         it_is_parent = fork
-        return unless it_is_parent
+        unless it_is_parent
+          Delayed::Worker.name += @worker_count.to_s unless Delayed::Worker.name.nil?
+          return
+        end
         @worker_count -= 1
       end
       exit 0
