@@ -24,12 +24,6 @@ module Delayed
     cattr_accessor :destroy_failed_jobs
     @@destroy_failed_jobs = true
 
-    def initialize
-      # Delayed::Job.min_priority = options[:min_priority] if options.has_key?(:min_priority)
-      # Delayed::Job.max_priority = options[:max_priority] if options.has_key?(:max_priority)
-      # Delayed::Job.job_types    = options[:job_types]    if options.has_key?(:job_types)
-    end
-
     # Starts worker
     def start
       @@name ||= ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
