@@ -8,11 +8,13 @@ module Delayed
   # A job object that is persisted to the database.
   # Contains the work object as a YAML field +handler+.
   class Job < ActiveRecord::Base
+    set_table_name :delayed_jobs
+    before_save { |job| job.run_at ||= job.class.db_time_now }
+
     extend JobDeprecations
 
     MAX_ATTEMPTS = 25
     MAX_RUN_TIME = 4.hours
-    set_table_name :delayed_jobs
 
     ParseObjectFromYaml = /\!ruby\/\w+\:([^\s]+)/
 
@@ -226,7 +228,7 @@ module Delayed
       end
     end
 
-  private
+   private
 
     def deserialize(source)
       handler = YAML.load(source) rescue nil
@@ -252,12 +254,6 @@ module Delayed
     # its auto loading magic. Will raise LoadError if not successful.
     def attempt_to_load(klass)
        klass.constantize
-    end
-
-  protected
-
-    def before_save
-      self.run_at ||= self.class.db_time_now
     end
 
   end
