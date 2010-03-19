@@ -3,9 +3,9 @@ module Delayed
     def self.move_methods_to_worker(*old_methods)
       old_methods.each do |old_method|
         new_method = old_method.to_s.gsub("worker_", "").to_sym
-        define_method(old_method) do |*args, &block|
+        define_method(old_method) do |*args|
           warn "#{caller[0]}: Job's #{old_method} is deprecated. Use Worker.#{new_method} instead."
-          Worker.send(new_method, *args, &block)
+          Worker.send(new_method, *args)
         end
       end
     end
