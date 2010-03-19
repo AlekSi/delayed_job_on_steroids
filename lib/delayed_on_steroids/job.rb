@@ -14,12 +14,6 @@ module Delayed
     MAX_RUN_TIME = 4.hours
     set_table_name :delayed_jobs
 
-    # By default failed jobs are destroyed after too many attempts.
-    # If you want to keep them around (perhaps to inspect the reason
-    # for the failure), set this to false.
-    cattr_accessor :destroy_failed_jobs
-    self.destroy_failed_jobs = true
-
     NextTaskSQL         = '(run_at <= ? AND (locked_at IS NULL OR locked_at < ?) OR (locked_by = ?)) AND failed_at IS NULL'
     NextTaskOrder       = 'priority DESC, run_at ASC'
 
@@ -67,7 +61,7 @@ module Delayed
         save!
       else
         logger.info "* [JOB] PERMANENTLY removing #{self.name} because of #{attempts} consequetive failures."
-        destroy_failed_jobs ? destroy : update_attribute(:failed_at, Delayed::Job.db_time_now)
+        Worker.destroy_failed_jobs ? destroy : update_attribute(:failed_at, Delayed::Job.db_time_now)
       end
     end
 

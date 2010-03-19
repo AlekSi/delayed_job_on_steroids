@@ -186,7 +186,7 @@ describe Delayed::Job do
 
     context "and we want to destroy jobs" do
       before do
-        Delayed::Job.destroy_failed_jobs = true
+        Delayed::Worker.destroy_failed_jobs = true
       end
 
       it "should be destroyed if it failed more than MAX_ATTEMPTS times" do
@@ -202,7 +202,7 @@ describe Delayed::Job do
 
     context "and we don't want to destroy jobs" do
       before do
-        Delayed::Job.destroy_failed_jobs = false
+        Delayed::Worker.destroy_failed_jobs = false
       end
 
       it "should be failed if it failed more than MAX_ATTEMPTS times" do

@@ -19,6 +19,11 @@ module Delayed
     cattr_accessor :name
     @@name = ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
 
+    # By default failed jobs are destroyed after too many attempts.
+    # If you want to keep them around (perhaps to inspect the reason for the failure), set this to false.
+    cattr_accessor :destroy_failed_jobs
+    @@destroy_failed_jobs = true
+
     def initialize
       # Delayed::Job.min_priority = options[:min_priority] if options.has_key?(:min_priority)
       # Delayed::Job.max_priority = options[:max_priority] if options.has_key?(:max_priority)
