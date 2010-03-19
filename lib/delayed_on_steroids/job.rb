@@ -53,7 +53,8 @@ module Delayed
 
         self.run_at       = time
         self.last_error   = message + "\n" + backtrace.join("\n")
-        self.unlock
+        self.locked_at    = nil
+        self.locked_by    = nil
         save!
       else
         logger.info "* [JOB] PERMANENTLY removing #{self.name} because of #{attempts} consequetive failures."
@@ -176,12 +177,6 @@ module Delayed
       else
         return false
       end
-    end
-
-    # Unlock this job (note: not saved to DB)
-    def unlock
-      self.locked_at    = nil
-      self.locked_by    = nil
     end
 
     # This is a good hook if you need to report job processing errors in additional or different ways
