@@ -21,9 +21,10 @@ module Delayed
           @worker_count = ([n, 1].max rescue 1)
           @run_as_daemon ||= (@worker_count > 1)
         end
-#        opts.on("-e", "--environment=name", String,
-#          "Specifies the environment to run this worker under (test/development/production).",
-#          "Default: development") { |e| @options[:environment] = e }
+
+        # Doesn't works.
+        # opts.on("-e", "--environment=name", String,
+        #   "Specifies the environment to run this worker under (test/development/production).") { |e| ENV['RAILS_ENV'] = e }
 
         opts.on("-h", "--help", "Show this help message.") { puts opts; exit }
         opts.parse!
@@ -44,6 +45,13 @@ module Delayed
     end
 
     def run
+      warn "Running in #{RAILS_ENV} environment!" if RAILS_ENV.include?("dev") or RAILS_ENV.include?("test")
+
+      # Saves memory with Ruby Enterprise Edition
+      if GC.respond_to?(:copy_on_write_friendly=)
+        GC.copy_on_write_friendly = true
+      end
+
       spawn_workers
       Process.daemon if @run_as_daemon
 
