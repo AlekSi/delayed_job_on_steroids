@@ -14,7 +14,7 @@ class CreateDelayedJobs < ActiveRecord::Migration
       table.timestamps
     end
 
-    add_index :delayed_jobs, :priority
+    add_index :delayed_jobs, [:priority, :run_at]
     add_index :delayed_jobs, :job_type
     add_index :delayed_jobs, :job_tag
     add_index :delayed_jobs, :run_at

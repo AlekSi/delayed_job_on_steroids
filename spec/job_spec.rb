@@ -356,7 +356,7 @@ describe Delayed::Job do
       NUM = 10
       NUM.times { Delayed::Job.enqueue SimpleJob.new, rand(NUM) }
       jobs = Delayed::Job.find_available(NUM)
-      jobs[0..-2].each_index { |i| (jobs[i].priority >= jobs[i+1].priority).should == true }
+      jobs[0..-2].each_index { |i| (jobs[i].priority <= jobs[i+1].priority).should == true }
     end
 
   end

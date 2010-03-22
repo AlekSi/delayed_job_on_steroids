@@ -147,7 +147,7 @@ module Delayed
       end
 
       conditions.unshift(sql)
-      find(:all, :conditions => conditions, :order => 'priority DESC, run_at ASC', :limit => limit)
+      find(:all, :conditions => conditions, :order => 'priority ASC, run_at ASC', :limit => limit)
     end
 
     # Run the next job we can get an exclusive lock on.
