@@ -54,9 +54,9 @@ module Delayed
 
       spawn_workers
       Process.daemon if @run_as_daemon
+      ActiveRecord::Base.connection.reconnect!
 
       Dir.chdir(RAILS_ROOT)
-
       Delayed::Worker.instance.start
     rescue => e
       logger.fatal(e) if defined?(logger)
