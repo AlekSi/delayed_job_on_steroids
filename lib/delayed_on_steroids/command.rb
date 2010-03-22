@@ -44,6 +44,12 @@ module Delayed
       exit 0
     end
 
+    def setup_logger
+      if logger.respond_to?(:auto_flushing=)
+        logger.auto_flushing = true
+      end
+    end
+
     def run
       warn "Running in #{RAILS_ENV} environment!" if RAILS_ENV.include?("dev") or RAILS_ENV.include?("test")
 
@@ -54,6 +60,7 @@ module Delayed
 
       spawn_workers
       Process.daemon if @run_as_daemon
+      setup_logger
       ActiveRecord::Base.connection.reconnect!
 
       Dir.chdir(RAILS_ROOT)
