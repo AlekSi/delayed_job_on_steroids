@@ -5,9 +5,7 @@ module Delayed
     SLEEP = 5
 
     cattr_accessor :logger
-    self.logger = if defined?(RAILS_DEFAULT_LOGGER)
-      RAILS_DEFAULT_LOGGER
-    end
+    @@logger = RAILS_DEFAULT_LOGGER if defined?(RAILS_DEFAULT_LOGGER)
 
     cattr_accessor :min_priority, :max_priority
     cattr_accessor :job_types
@@ -26,8 +24,9 @@ module Delayed
 
     # Starts worker
     def start
-      @@name ||= ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
-      say "*** Starting job worker #{@@name}"
+      @@name ||= ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"   # unless it was specified by Command
+
+      @@logger.info("* [#{@@name}] Starting job worker...")
 
       trap('TERM') { say 'Exiting...'; $exit = true }
       trap('INT')  { say 'Exiting...'; $exit = true }
@@ -46,7 +45,7 @@ module Delayed
         if count.zero?
           sleep(SLEEP)
         else
-          say "#{count} jobs processed at %.4f j/s, %d failed ..." % [count / realtime, result.last]
+          @@logger.info("* [#{@@name}] #{count} jobs processed at %.4f j/s, %d failed..." % [count / realtime, result.last]) unless @@quiet
         end
 
         break if $exit
@@ -56,11 +55,5 @@ module Delayed
       # When a worker is exiting, make sure we don't have any locked jobs.
       Delayed::Job.update_all("locked_by = null, locked_at = null", ["locked_by = ?", @@name])
     end
-
-    def say(text)
-      puts text unless quiet
-      logger.info text if logger
-    end
-
   end
 end

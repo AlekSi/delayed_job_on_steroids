@@ -45,8 +45,8 @@ module Delayed
     end
 
     def setup_logger
-      if logger.respond_to?(:auto_flushing=)
-        logger.auto_flushing = true
+      if Worker.logger.respond_to?(:auto_flushing=)
+        Worker.logger.auto_flushing = true
       end
     end
 
@@ -66,7 +66,7 @@ module Delayed
       Dir.chdir(RAILS_ROOT)
       Delayed::Worker.instance.start
     rescue => e
-      logger.fatal(e) if defined?(logger)
+      Worker.logger.fatal(e)
       STDERR.puts(e.message)
       exit 1
     end

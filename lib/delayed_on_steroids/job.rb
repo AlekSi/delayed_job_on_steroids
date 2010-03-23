@@ -63,17 +63,17 @@ module Delayed
         self.locked_by    = nil
         save!
       else
-        logger.info "* [JOB] PERMANENTLY removing #{self.name} because of #{attempts} consequetive failures."
+        Worker.logger.info("* [#{Worker.name}] PERMANENTLY removing #{self.name} because of #{attempts} consequetive failures.")
         Worker.destroy_failed_jobs ? destroy : update_attribute(:failed_at, self.class.db_time_now)
       end
     end
 
     # Try to run one job. Returns true/false (work done/work failed) or nil if job can't be locked.
     def run_with_lock(max_run_time = MAX_RUN_TIME, worker_name = Worker.name)
-      logger.info "* [JOB] acquiring lock on #{name}"
+      Worker.logger.info("* [#{Worker.name}] acquiring lock on #{name}")
       unless lock_exclusively!(max_run_time, worker_name)
         # We did not get the lock, some other worker process must have
-        logger.warn "* [JOB] failed to acquire exclusive lock for #{name}"
+        Worker.logger.warn("* [#{Worker.name}] failed to acquire exclusive lock for #{name}")
         return nil # no work done
       end
 
@@ -82,7 +82,7 @@ module Delayed
           Timeout.timeout(max_run_time.to_i) { invoke_job }
           destroy
         end
-        logger.info "* [JOB] #{name} completed after %.4f" % runtime
+        Worker.logger.info("* [#{Worker.name}] #{name} completed after %.4f" % runtime)
         return true  # did work
       rescue Exception => e
         reschedule(e.message, e.backtrace)
@@ -186,9 +186,9 @@ module Delayed
     end
 
     # This is a good hook if you need to report job processing errors in additional or different ways
-    def log_exception(error)
-      logger.error("* [JOB] #{name} failed with #{error.class.name}: #{error.message} - #{attempts} failed attempts")
-      logger.error(error)
+    def log_exception(e)
+      Worker.logger.error("! [#{Worker.name}] #{name} failed with #{e.class.name}: #{e.message} - #{attempts} failed attempts")
+      Worker.logger.error(e)
     end
 
     # Do num jobs and return stats on success/failure.
