@@ -53,6 +53,12 @@ module Delayed
       end
     end
 
+    def write_pid
+      pid = "#{RAILS_ROOT}/tmp/pids/dj_#{Delayed::Worker.name.parameterize('_')}.pid"
+      File.open(pid, 'w') { |f| f.write(Process.pid) }
+      at_exit { File.delete(pid) if File.exist?(pid) }
+    end
+
     def setup_logger
       if Worker.logger.respond_to?(:auto_flushing=)
         Worker.logger.auto_flushing = true
@@ -69,6 +75,7 @@ module Delayed
 
       spawn_workers
       Dir.chdir(RAILS_ROOT)
+      write_pid
       setup_logger
       ActiveRecord::Base.connection.reconnect!
 
