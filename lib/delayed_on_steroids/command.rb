@@ -32,16 +32,25 @@ module Delayed
     end
 
     def spawn_workers
-      return if @worker_count == 1
-      while @worker_count > 0
-        it_is_parent = fork
-        unless it_is_parent
-          Delayed::Worker.name += @worker_count.to_s unless Delayed::Worker.name.nil?
-          return
+      # fork children if needed
+      worker_no = nil
+      if @worker_count > 1
+        it_is_parent = true
+        @worker_count.times do |no|
+          it_is_parent = fork
+          worker_no = no
+          break unless it_is_parent
         end
-        @worker_count -= 1
+        exit 0 if it_is_parent
       end
-      exit 0
+
+      Process.daemon if @run_as_daemon
+
+      if Delayed::Worker.name.nil?
+        Delayed::Worker.name = ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"
+      else
+        Delayed::Worker.name += worker_no.to_s
+      end
     end
 
     def setup_logger
@@ -59,11 +68,10 @@ module Delayed
       end
 
       spawn_workers
-      Process.daemon if @run_as_daemon
+      Dir.chdir(RAILS_ROOT)
       setup_logger
       ActiveRecord::Base.connection.reconnect!
 
-      Dir.chdir(RAILS_ROOT)
       Delayed::Worker.instance.start
     rescue => e
       Worker.logger.fatal(e)

@@ -11,8 +11,8 @@ module Delayed
     cattr_accessor :job_types
     cattr_accessor :quiet
 
-    # Every worker should has a unique name.
-    # If wasn't assigned, it will be generated from the hostname and the pid of the process at +start+.
+    # Every worker should has a unique name. If you start worker via +delayed_job+ script, name will be generated
+    # automatically based on the hostname and the pid of the process.
     # There is advantage to assign name manually:
     # workers can safely resume working on tasks which are locked by themselves (the worker will assume that it crashed before).
     cattr_accessor :name
@@ -24,8 +24,6 @@ module Delayed
 
     # Starts worker
     def start
-      @@name ||= ("host:#{Socket.gethostname} " rescue "") + "pid:#{Process.pid}"   # unless it was specified by Command
-
       @@logger.info("* [#{@@name}] Starting job worker...")
 
       trap('TERM') { say 'Exiting...'; $exit = true }
