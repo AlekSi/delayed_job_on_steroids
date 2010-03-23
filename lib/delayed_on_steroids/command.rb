@@ -21,10 +21,11 @@ module Delayed
           @worker_count = ([n, 1].max rescue 1)
           @run_as_daemon ||= (@worker_count > 1)
         end
-
-        # Doesn't works.
-        # opts.on("-e", "--environment=name", String,
-        #   "Specifies the environment to run this worker under (test/development/production).") { |e| ENV['RAILS_ENV'] = e }
+        opts.on("-e", "--environment=name", String,
+          "Specifies the environment to run this worker under (test/development/production/etc).") do |e|
+          ENV["RAILS_ENV"] = e
+          RAILS_ENV.replace(e) if defined?(RAILS_ENV)
+        end
 
         opts.on("-h", "--help", "Show this help message.") { puts opts; exit }
         opts.parse!
