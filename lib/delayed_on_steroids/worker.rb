@@ -26,8 +26,8 @@ module Delayed
     def start
       @@logger.info("* [#{@@name}] Starting job worker...")
 
-      trap('TERM') { say 'Exiting...'; $exit = true }
-      trap('INT')  { say 'Exiting...'; $exit = true }
+      trap('TERM') { @@logger.info("* [#{@@name}] Exiting..."); $exit = true }
+      trap('INT')  { @@logger.info("* [#{@@name}] Exiting..."); $exit = true }
 
       loop do
         result = nil
