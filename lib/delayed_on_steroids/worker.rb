@@ -5,7 +5,7 @@ module Delayed
     SLEEP = 5
 
     cattr_accessor :logger
-    @@logger = Rails.logger
+    @@logger = Rails.logger if defined?(Rails)
 
     cattr_accessor :min_priority, :max_priority
     cattr_accessor :job_types
