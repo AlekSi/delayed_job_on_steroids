@@ -63,7 +63,7 @@ module Delayed
         self.locked_by    = nil
         save!
       else
-        Worker.logger.info("* [#{Worker.name}] PERMANENTLY removing #{self.name} because of #{attempts} consequetive failures.")
+        Worker.logger.warn("* [#{Worker.name}] PERMANENTLY removing #{self.name} because of #{attempts} consequetive failures.")
         Worker.destroy_failed_jobs ? destroy : update_attribute(:failed_at, self.class.db_time_now)
       end
     end

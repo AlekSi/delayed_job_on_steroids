@@ -5,11 +5,10 @@ module Delayed
     SLEEP = 5
 
     cattr_accessor :logger
-    @@logger = RAILS_DEFAULT_LOGGER if defined?(RAILS_DEFAULT_LOGGER)
+    @@logger = Rails.logger
 
     cattr_accessor :min_priority, :max_priority
     cattr_accessor :job_types
-    cattr_accessor :quiet
 
     # Every worker should has a unique name. If you start worker via +delayed_job+ script, name will be generated
     # automatically based on the hostname and the pid of the process.
@@ -43,7 +42,7 @@ module Delayed
         if count.zero?
           sleep(SLEEP)
         else
-          @@logger.info("* [#{@@name}] #{count} jobs processed at %.4f j/s, %d failed..." % [count / realtime, result.last]) unless @@quiet
+          @@logger.info("* [#{@@name}] #{count} jobs processed at %.4f j/s, %d failed..." % [count / realtime, result.last])
         end
 
         break if $exit

@@ -16,6 +16,10 @@ module Delayed
         opts.on('--max-priority=number', Integer, 'Maximum priority of jobs to run.')    { |n| Delayed::Worker.max_priority = n }
         opts.on('--job-types=types', String, 'Type of jobs to run.')                     { |t| Delayed::Worker.job_types = t.split(',') }
         opts.on('--keep-failed-jobs', 'Do not remove failed jobs from database.')        { Delayed::Worker.destroy_failed_jobs = false }
+        opts.on('--log-file=file', String, 'Use specified file to log instead of Rails default logger.') do |f|
+          Delayed::Worker.logger = ActiveSupport::BufferedLogger.new(f)
+        end
+        opts.on("-q", "--quiet", "Be quieter.")                                          { @quiet = true }
         opts.on("-d", "--daemon", "Make worker run as a Daemon.")                        { @run_as_daemon = true }
         opts.on('-n', '--number-of-workers=number', Integer, "Number of unique workers to spawn. Implies -d option if number > 1.") do |n|
           @worker_count = ([n, 1].max rescue 1)
@@ -24,7 +28,7 @@ module Delayed
         opts.on("-e", "--environment=name", String,
           "Specifies the environment to run this worker under (test/development/production/etc).") do |e|
           ENV["RAILS_ENV"] = e
-          RAILS_ENV.replace(e) if defined?(RAILS_ENV)
+          RAILS_ENV.replace(e)
         end
 
         opts.on("-h", "--help", "Show this help message.") { puts opts; exit }
@@ -61,9 +65,19 @@ module Delayed
     end
 
     def setup_logger
-      if Worker.logger.respond_to?(:auto_flushing=)
-        Worker.logger.auto_flushing = true
+      if Delayed::Worker.logger.respond_to?(:auto_flushing=)
+        Delayed::Worker.logger.auto_flushing = true
       end
+
+      if @quiet and Delayed::Worker.logger.respond_to?(:level=)
+        if Delayed::Worker.logger.kind_of?(Logger)
+          Delayed::Worker.logger.level = Logger::Severity::INFO
+        elsif Delayed::Worker.logger.kind_of?(ActiveSupport::BufferedLogger)
+          Delayed::Worker.logger.level = ActiveSupport::BufferedLogger::Severity::INFO
+       end
+      end
+
+      ActiveRecord::Base.logger = Delayed::Worker.logger
     end
 
     def run
@@ -82,7 +96,7 @@ module Delayed
 
       Delayed::Worker.instance.start
     rescue => e
-      Worker.logger.fatal(e)
+      Delayed::Worker.logger.fatal(e)
       STDERR.puts(e.message)
       exit 1
     end
