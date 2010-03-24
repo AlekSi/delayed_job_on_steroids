@@ -5,37 +5,42 @@
 
 Gem::Specification.new do |s|
   s.name = %q{delayed_job_on_steroids}
-  s.version = "1.7.5"
+  s.version = "2.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tobias L\303\274tke", "Aleksey Palazhchenko"]
-  s.date = %q{2010-03-15}
+  s.date = %q{2010-03-24}
   s.description = %q{Delated_job (or DJ) encapsulates the common pattern of asynchronously executing longer tasks in the background.}
   s.email = %q{aleksey.palazhchenko@gmail.com}
   s.extra_rdoc_files = [
-    "README.textile"
+    "README.markdown"
   ]
   s.files = [
     ".gitignore",
      "MIT-LICENSE",
-     "README.textile",
+     "README.markdown",
      "Rakefile",
      "VERSION",
      "delayed_job_on_steroids.gemspec",
+     "generators/delayed_job/delayed_job_generator.rb",
+     "generators/delayed_job/templates/script",
      "generators/delayed_job_migration/delayed_job_migration_generator.rb",
      "generators/delayed_job_migration/templates/migration.rb",
      "init.rb",
-     "lib/delayed/job.rb",
-     "lib/delayed/message_sending.rb",
-     "lib/delayed/performable_method.rb",
-     "lib/delayed/worker.rb",
-     "lib/delayed_job.rb",
+     "lib/delayed_job_on_steroids.rb",
+     "lib/delayed_on_steroids/command.rb",
+     "lib/delayed_on_steroids/job.rb",
+     "lib/delayed_on_steroids/job_deprecations.rb",
+     "lib/delayed_on_steroids/message_sending.rb",
+     "lib/delayed_on_steroids/performable_method.rb",
+     "lib/delayed_on_steroids/tasks.rb",
+     "lib/delayed_on_steroids/worker.rb",
      "spec/database.rb",
      "spec/delayed_method_spec.rb",
      "spec/job_spec.rb",
      "spec/story_spec.rb",
-     "tasks/jobs.rake",
-     "tasks/tasks.rb"
+     "spec/worker_spec.rb",
+     "tasks/jobs.rake"
   ]
   s.homepage = %q{http://github.com/AlekSi/delayed_job_on_steroids}
   s.rdoc_options = ["--charset=UTF-8"]
@@ -43,10 +48,11 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.6}
   s.summary = %q{Database-backed asynchronous priority queue system, extended and improved}
   s.test_files = [
-    "spec/delayed_method_spec.rb",
+    "spec/database.rb",
+     "spec/delayed_method_spec.rb",
      "spec/job_spec.rb",
      "spec/story_spec.rb",
-     "spec/database.rb"
+     "spec/worker_spec.rb"
   ]
 
   if s.respond_to? :specification_version then
