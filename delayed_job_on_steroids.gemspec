@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{delayed_job_on_steroids}
-  s.version = "2.0.0"
+  s.version = "2.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tobias L\303\274tke", "Aleksey Palazhchenko"]
-  s.date = %q{2010-03-24}
+  s.date = %q{2010-05-07}
   s.description = %q{Delated_job (or DJ) encapsulates the common pattern of asynchronously executing longer tasks in the background.}
   s.email = %q{aleksey.palazhchenko@gmail.com}
   s.extra_rdoc_files = [
