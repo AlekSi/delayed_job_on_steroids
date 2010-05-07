@@ -1,4 +1,5 @@
-h1. Delayed::Job (on steroids)
+Delayed::Job (on steroids)
+==========================
 
 delayed_job (or DJ) encapsulates the common pattern of asynchronously executing longer tasks in the background. 
 Amongst those tasks are:
@@ -12,7 +13,8 @@ Amongst those tasks are:
 * spam checks
 
 
-h2. Setup
+Setup
+-----
 
 The library evolves around a delayed_jobs table which can be created by using:
 
@@ -54,7 +56,8 @@ Here is an example of changing job parameters in Rails:
 	end
 
 
-h2. Usage
+Usage
+-----
 
 Jobs are simple ruby objects with a method called perform. Any object which responds to perform can be stuffed into the jobs table.
 Job objects are serialized to yaml so that they can later be resurrected by the job runner. 
@@ -74,7 +77,8 @@ There is also a second way to get jobs in the queue: send_later.
 This will simply create a `Delayed::PerformableMethod` job in the jobs table which serializes all the parameters you pass to it. There are some special smarts for active record objects which are stored as their text representation and loaded from the database fresh when the job is actually run later.
                                                                                                                               
                                                                                                                     
-h3. Running the jobs
+Running the jobs
+----------------
 
 Run `script/generate delayed_job` to add `script/delayed_job`. This script can then be used to manage a process which will start working off jobs.
 
@@ -85,12 +89,14 @@ run multiple workers on per computer, but you must give each one a unique name (
 Keep in mind that each worker will check the database at least every 5 seconds.
 
 
-h2. About this fork
+About this fork
+---------------
 
 This fork was born to introduce new features to delayed_job, but also to be almost-fully compatible with it.
 
 
-h3. Incompatibilities with tobi's delayed_job
+Incompatibilities with tobi's delayed_job
+-----------------------------------------
 
 * Database schema:
  * `last_error` column's type changed from string to text;
@@ -98,7 +104,8 @@ h3. Incompatibilities with tobi's delayed_job
 * Invert meaning of `priority` field: job with lesser priority will be executed earlier. See http://www.elevatedcode.com/articles/2009/11/04/speeding-up-delayed-job/ for background.
 
 
-h3. Changes
+Changes
+-------
 
 * 2.0:
  * Added `script/delayed_job` - runs as daemon, several workers concurrently, minimal and maximal priority, job type, logger, etc.
@@ -109,16 +116,3 @@ h3. Changes
 
 * 1.7.5:
  * Added possibility to run only specific types of jobs.
-
-
-h3. Original changelog
-
-* 1.7.0: Added `failed_at` column which can optionally be set after a certain amount of failed job attempts. By default failed job attempts are destroyed after about a month. 
-
-* 1.6.0: Renamed `locked_until` to `locked_at`. We now store when we start a given job instead of how long it will be locked by the worker. This allows us to get a reading on how long a job took to execute.                    
-
-* 1.5.0: Job runners can now be run in parallel. Two new database columns are needed: `locked_until` and `locked_by`. This allows us to use   pessimistic locking instead of relying on row level locks. This enables us to run as many worker processes as we need to speed up queue processing.
-
-* 1.2.0: Added `#send_later` to Object for simpler job creation
-
-* 1.0.0: Initial release
