@@ -25,4 +25,9 @@ namespace :jobs do
     puts "Scheduled jobs     : #{ jobs.count{ |job| not (job.locked? or job.failed?) } }"
     puts "Failed stored jobs : #{ jobs.count{ |job| job.failed? } }"
   end
+
+  desc "Start single delayed_job worker"
+  task :work => [:environment] do
+    Delayed::Command.new.run
+  end
 end
