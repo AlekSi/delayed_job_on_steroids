@@ -59,7 +59,9 @@ module Delayed
     end
 
     def write_pid
-      pid = "#{RAILS_ROOT}/tmp/pids/dj_#{Delayed::Worker.name.parameterize('_')}.pid"
+      dir = "#{RAILS_ROOT}/tmp/pids"
+      Dir.mkdir(dir) unless File.exists?(dir)
+      pid = "#{dir}/dj_#{Delayed::Worker.name.parameterize('_')}.pid"
       File.open(pid, 'w') { |f| f.write(Process.pid) }
       at_exit { File.delete(pid) if File.exist?(pid) }
     end
