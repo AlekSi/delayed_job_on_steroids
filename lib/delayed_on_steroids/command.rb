@@ -16,6 +16,7 @@ module Delayed
         opts.on('--max-priority=number', Integer, 'Maximum priority of jobs to run.')    { |n| Delayed::Worker.max_priority = n }
         opts.on('--job-types=types', String, 'Type of jobs to run.')                     { |t| Delayed::Worker.job_types = t.split(',') }
         opts.on('--keep-failed-jobs', 'Do not remove failed jobs from database.')        { Delayed::Worker.destroy_failed_jobs = false }
+        opts.on('--pid-file=file', String, 'Write PID to file.')                         { |f| @pid_file = f }
         opts.on('--log-file=file', String, 'Use specified file to log instead of Rails default logger.') do |f|
           Delayed::Worker.logger = ActiveSupport::BufferedLogger.new(f)
         end
@@ -59,11 +60,11 @@ module Delayed
     end
 
     def write_pid
-      dir = "#{RAILS_ROOT}/tmp/pids"
+      @pid_file ||= "#{RAILS_ROOT}/tmp/pids/dj_#{Delayed::Worker.name.parameterize('_')}.pid"
+      dir = File.dirname(@pid_file)
       Dir.mkdir(dir) unless File.exists?(dir)
-      pid = "#{dir}/dj_#{Delayed::Worker.name.parameterize('_')}.pid"
-      File.open(pid, 'w') { |f| f.write(Process.pid) }
-      at_exit { File.delete(pid) if File.exist?(pid) }
+      File.open(@pid_file, 'w') { |f| f.write(Process.pid) }
+      at_exit { File.delete(@pid_file) if File.exist?(@pid_file) }
     end
 
     def setup_logger
